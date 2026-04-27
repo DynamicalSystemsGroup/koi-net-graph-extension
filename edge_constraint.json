@@ -1,0 +1,65 @@
+{
+  "@context": {
+    "sh": "http://www.w3.org/ns/shacl#",
+    "koi": "orn:koi-net.vocab:"
+  },
+  "@graph": [
+    {
+      "@id": "koi:EdgeShape",
+      "@type": "sh:NodeShape",
+      "sh:targetClass": {"@id": "orn:koi-net.edge"},
+      "sh:or": {
+        "@list": [
+          {"@id": "koi:WebhookEdgeShape"},
+          {"@id": "koi:PollEdgeShape"}
+        ]
+      },
+      "sh:sparql": {
+        "sh:select": "PREFIX koi: <orn:koi-net.vocab:> SELECT $this ?ridType WHERE { GRAPH ?edgeGraph { $this koi:ridType ?ridType . $this koi:edgeSource ?source . } FILTER ( ?ridType != \"orn:koi-net.node\" && ?ridType != \"orn:koi-net.edge\" && NOT EXISTS { GRAPH ?nodeGraph { ?source koi:nodeProvides/koi:eventType ?ridType . } } ) }"
+      }
+    },
+    {
+      "@id": "koi:WebhookEdgeShape",
+      "@type": "sh:NodeShape",
+      "sh:property": [
+        {
+          "sh:path": {"@id": "koi:edgeType"},
+          "sh:hasValue": "WEBHOOK"
+        },
+        {
+          "sh:path": {
+            "@list": [
+              {"@id": "koi:edgeTarget"},
+              {"@id": "koi:nodeType"}
+            ]
+          },
+          "sh:hasValue": "FULL"
+        }
+      ]
+    },
+    {
+      "@id": "koi:PollEdgeShape",
+      "@type": "sh:NodeShape",
+      "sh:property": [
+        {
+          "sh:path": {"@id": "koi:edgeType"},
+          "sh:hasValue": "POLL"
+        },
+        {
+          "sh:path": {
+            "@list": [
+              {"@id": "koi:edgeTarget"},
+              {"@id": "koi:nodeType"}
+            ]
+          },
+          "sh:in": {
+            "@list": [
+              "PARTIAL",
+              "FULL"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

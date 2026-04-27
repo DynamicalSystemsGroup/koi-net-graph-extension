@@ -1,0 +1,17 @@
+[project]
+name = "koi-net-graph-extension"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "koi-net==2.1.0b1",
+    "koi-net-coordinator-node>=0.1.0",
+    "pyshacl>=0.31.0",
+    "rdflib>=7.6.0",
+    "rid-lib",
+]
+
+[tool.uv.sources]
+koi-net = { path = "../koi-net", editable = true }
+rid-lib = { path = "../rid-lib", editable = true }
