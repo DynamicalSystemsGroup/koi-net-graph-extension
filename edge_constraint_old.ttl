@@ -1,0 +1,52 @@
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix koi: <orn:koi-net.vocab:> .
+@prefix orn: <orn:> .
+
+koi:EdgeShape a sh:NodeShape ;
+    sh:targetClass orn:koi-net.edge ;
+    sh:or (
+        koi:WebhookEdgeShape
+        koi:PollEdgeShape
+    ) ;
+    sh:sparql [
+        sh:select """
+            PREFIX koi: <orn:koi-net.vocab:>
+            
+            SELECT $this ?ridType
+            WHERE {
+                GRAPH ?edgeGraph {
+                    $this koi:ridType ?ridType .
+                    $this koi:edgeSource ?source .
+                }
+                FILTER (
+                    ?ridType != "orn:koi-net.node" &&
+                    ?ridType != "orn:koi-net.edge" &&
+                    NOT EXISTS {
+                        GRAPH ?nodeGraph {
+                            ?source koi:nodeProvides/koi:eventType ?ridType .
+                        }
+                    }
+                )
+            }
+        """ ;
+    ] .
+
+koi:WebhookEdgeShape a sh:NodeShape ;
+    sh:property [
+        sh:path koi:edgeType ;
+        sh:hasValue "WEBHOOK" ;
+    ] ;
+    sh:property [
+        sh:path (koi:edgeTarget koi:nodeType) ;
+        sh:hasValue "FULL";
+    ] .
+    
+koi:PollEdgeShape a sh:NodeShape ;
+    sh:property [
+        sh:path koi:edgeType ;
+        sh:hasValue "POLL" ;
+    ] ;
+    sh:property [
+        sh:path (koi:edgeTarget koi:nodeType) ;
+        sh:hasValue "PARTIAL";
+    ] .

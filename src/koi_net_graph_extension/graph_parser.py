@@ -1,64 +1,90 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from logging import Logger
 from koi_net.components import Cache, Effector
-from koi_net.components.interfaces import KnowledgeHandler, HandlerType
-from koi_net.protocol import KnowledgeObject
-from rdflib import Dataset, Graph, URIRef
+from rdflib import Graph, URIRef
+from rid_lib import RID
 from rid_lib.ext import Bundle
 from rid_lib.types import KoiNetEdge, KoiNetNode
 
 from .rid_types import KoiNetContext
 
 @dataclass
-class GraphParser(KnowledgeHandler):
+class GraphParser:
+    log: Logger
     effector: Effector
     cache: Cache
-    dataset: Dataset = field(default_factory=Dataset)
     
-    handler_type = HandlerType.Network
-    rid_types = (KoiNetNode, KoiNetEdge)
+    def retrieve_context(self, ctx_rid: KoiNetContext):
+        ctx_bundle = self.effector.deref(ctx_rid)
+        if ctx_bundle:
+            return ctx_bundle.contents
+        else:
+            self.log.warning("Failed to retrieve context")
+            return {}
     
-    def parse_object(
+    def preprocess_object(
         self, 
         obj: dict, 
-        graph: Graph, 
         default_context: KoiNetContext | None = None
     ):
-        ctx_rid = obj.get("@context", default_context)
-        if not ctx_rid:
-            return
-        ctx_bundle = self.effector.deref(ctx_rid)
-        if not ctx_bundle:
-            self.log.warning(f"Failed to dereference context {ctx_rid}")
-            return
-        obj["@context"] = ctx_bundle.contents
+        print("original object")
+        print(obj)
+        obj = obj.copy()
+        expanded_ctx = {}
+        ctx = obj.get("@context", default_context)
+        if type(ctx) is str:
+            try:
+                ctx_rid = RID.from_string(ctx)
+                expanded_ctx |= self.retrieve_context(ctx_rid)
+            except TypeError:
+                self.log.warning("Invalid RID in context")
+        elif type(ctx) is dict:
+            expanded_ctx |= ctx
+        elif type(ctx) is list:
+            for item in ctx:
+                if type(item) is str:
+                    try:
+                        ctx_rid = RID.from_string(item)
+                        expanded_ctx |= self.retrieve_context(ctx_rid)
+                    except TypeError:
+                        self.log.warning("Invalid RID in context")
+                elif type(item) is dict:
+                    expanded_ctx |= item
+                else:
+                    continue
+        else:
+            self.log.info("No context found")
+            return obj
         
+        obj["@context"] = expanded_ctx
+        
+        print("processed object")
         print(obj)
         
-        graph.parse(data=obj, format="json-ld")
+        return obj
         
-    def parse_bundle(self, bundle: Bundle):
-        named_graph = self.dataset.graph(URIRef(str(bundle.rid)))
-        
+    def bundle_to_graph(self, bundle: Bundle):
+        named_graph = Graph(identifier=URIRef(str(bundle.rid)))
+
         context_lookup = {
             KoiNetNode: KoiNetContext(KoiNetNode.namespace),
             KoiNetEdge: KoiNetContext(KoiNetEdge.namespace)
         }
         
-        # self.log.info("Parsing manifest...")
-        self.parse_object(
+        manifest_obj = self.preprocess_object(
             obj=bundle.manifest.model_dump(mode="json", by_alias=True),
-            graph=named_graph,
             default_context=KoiNetContext("manifest")
         )
-        # self.log.info("Parsing contents...")
-        self.parse_object(
+        named_graph.parse(data=manifest_obj, format="json-ld")
+        
+        contents_obj = self.preprocess_object(
             obj=bundle.contents | {
                 "@id": str(bundle.rid),
                 "@type": str(type(bundle.rid))
             },
-            graph=named_graph,
             default_context=context_lookup.get(type(bundle.rid))
         )
+        named_graph.parse(data=contents_obj, format="json-ld")
         
         
         self.log.info(f"Parsed {len(named_graph)} triples from {bundle.rid}:")
@@ -66,13 +92,11 @@ class GraphParser(KnowledgeHandler):
             self.log.info(", ".join(triple))
         
         return named_graph
-        
-    def start(self):
-        for rid in self.cache.list_rids(self.rid_types):
-            bundle = self.cache.read(rid)
-            self.parse_bundle(bundle)
     
-    def handle(self, kobj: KnowledgeObject):
-        named_graph = self.parse_bundle(kobj.bundle)
-        
-        
+    
+    """
+    two issues:
+    - context injector not working
+    - coordinator is not serializing bundles by alias
+    """
+    

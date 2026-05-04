@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 
-from koi_net.components import Cache
-from koi_net.infra import depends_on
 from rid_lib.ext import Bundle
+from koi_net.components.interfaces import DerefHandler
 
 from .rid_types import KoiNetContext
 
@@ -36,15 +35,14 @@ contexts = {
 }
 
 @dataclass
-class GraphVocabLoader:
-    cache: Cache
+class GraphVocabDerefHandler(DerefHandler):
+    rid_types = (KoiNetContext,)
     
-    @depends_on("cache")
-    def start(self):
-        for rid, contents in contexts.items():
-            self.cache.write(
-                Bundle.generate(
-                    rid=rid,
-                    contents=contents
-                )
-            )
+    def handle(self, rid: KoiNetContext):
+        if rid not in contexts:
+            return
+        
+        return Bundle.generate(
+            rid=rid,
+            contents=contexts[rid]
+        )

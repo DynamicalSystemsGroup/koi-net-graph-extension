@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "deepdiff>=9.0.0",
     "koi-net==2.1.0b1",
     "koi-net-coordinator-node>=0.1.0",
+    "pyld>=3.0.0",
     "pyshacl>=0.31.0",
     "rdflib>=7.6.0",
     "rid-lib",
@@ -15,3 +17,4 @@ dependencies = [
 [tool.uv.sources]
 koi-net = { path = "../koi-net", editable = true }
 rid-lib = { path = "../rid-lib", editable = true }
+koi-net-coordinator-node = { path = "../koi-net-coordinator-node", editable = true }

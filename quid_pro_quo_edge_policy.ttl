@@ -1,0 +1,69 @@
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix koi: <orn:koi-net.vocab:> .
+@prefix orn: <orn:> .
+
+koi:EdgeShape a sh:NodeShape ;
+    sh:targetClass orn:koi-net.edge ;
+    
+    sh:sparql [
+        sh:message "Target node must be an event provider" ;
+        sh:select """
+            PREFIX koi: <orn:koi-net.vocab:>
+            SELECT $this WHERE {
+                GRAPH ?edgeGraph {
+                    $this koi:edgeTarget ?target .
+                }
+                FILTER (
+                    NOT EXISTS {
+                        GRAPH ?nodeGraph {
+                            ?target koi:nodeProvides/koi:eventType ?ridType .
+                        }
+                    }
+                )
+            }
+        """
+    ] ;
+
+    sh:sparql [
+        sh:message "WEBHOOK edges must target a FULL node" ;
+        sh:select """
+            PREFIX koi: <orn:koi-net.vocab:>
+            SELECT $this WHERE {
+                GRAPH ?edgeGraph {
+                    $this koi:edgeType "WEBHOOK" .
+                    $this koi:edgeTarget ?target .
+                }
+                FILTER (
+                    NOT EXISTS { 
+                        GRAPH ?nodeGraph {
+                            ?target koi:nodeType "FULL" .
+                        }
+                    }
+                )
+            }
+        """ ;
+    ] ;
+
+    sh:sparql [
+        sh:message "Edge subscription to RID type {?ridType} not provided by source node" ;
+        sh:select """
+            PREFIX koi: <orn:koi-net.vocab:>
+            
+            SELECT $this ?ridType
+            WHERE {
+                GRAPH ?edgeGraph {
+                    $this koi:ridType ?ridType .
+                    $this koi:edgeSource ?source .
+                }
+                FILTER (
+                    ?ridType != "orn:koi-net.node" &&
+                    ?ridType != "orn:koi-net.edge" &&
+                    NOT EXISTS {
+                        GRAPH ?nodeGraph {
+                            ?source koi:nodeProvides/koi:eventType ?ridType .
+                        }
+                    }
+                )
+            }
+        """ ;
+    ] .
