@@ -27,8 +27,6 @@ class GraphParser:
         obj: dict, 
         default_context: KoiNetContext | None = None
     ):
-        print("original object")
-        print(obj)
         obj = obj.copy()
         expanded_ctx = {}
         ctx = obj.get("@context", default_context)
@@ -38,8 +36,10 @@ class GraphParser:
                 expanded_ctx |= self.retrieve_context(ctx_rid)
             except TypeError:
                 self.log.warning("Invalid RID in context")
+                
         elif type(ctx) is dict:
             expanded_ctx |= ctx
+            
         elif type(ctx) is list:
             for item in ctx:
                 if type(item) is str:
@@ -52,14 +52,14 @@ class GraphParser:
                     expanded_ctx |= item
                 else:
                     continue
+                
         else:
             self.log.info("No context found")
             return obj
         
-        obj["@context"] = expanded_ctx
+        self.log.info(f"Expanded context: {expanded_ctx}")
         
-        print("processed object")
-        print(obj)
+        obj["@context"] = expanded_ctx
         
         return obj
         
@@ -71,12 +71,15 @@ class GraphParser:
             KoiNetEdge: KoiNetContext(KoiNetEdge.namespace)
         }
         
+        self.log.info(f"Parsing bundle {bundle.rid}")
+        self.log.info("Processing manifest")
         manifest_obj = self.preprocess_object(
             obj=bundle.manifest.model_dump(mode="json", by_alias=True),
             default_context=KoiNetContext("manifest")
         )
         named_graph.parse(data=manifest_obj, format="json-ld")
         
+        self.log.info("Processing contents")
         contents_obj = self.preprocess_object(
             obj=bundle.contents | {
                 "@id": str(bundle.rid),
@@ -86,17 +89,8 @@ class GraphParser:
         )
         named_graph.parse(data=contents_obj, format="json-ld")
         
-        
         self.log.info(f"Parsed {len(named_graph)} triples from {bundle.rid}:")
         for triple in named_graph:
             self.log.info(", ".join(triple))
         
         return named_graph
-    
-    
-    """
-    two issues:
-    - context injector not working
-    - coordinator is not serializing bundles by alias
-    """
-    
