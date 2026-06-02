@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from rid_lib.ext import Bundle
 from koi_net.components.interfaces import DerefHandler
 
-from .rid_types import KoiNetContext
+from ..rid_types import KoiNetContext
 
 contexts = {
     KoiNetContext("manifest"): {

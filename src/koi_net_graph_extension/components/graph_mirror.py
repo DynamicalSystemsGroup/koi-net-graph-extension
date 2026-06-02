@@ -29,7 +29,7 @@ class GraphMirror(KnowledgeHandler):
             self.log.info(f"Deleting {kobj.rid} from graph")
             self.rdf_dataset.remove_graph(uri_ref)
         
-        self.rdf_dataset.serialize("dump.ttl")
+        # self.rdf_dataset.serialize("dump.ttl")
             
     def start(self):
         for rid in self.cache.list_rids():
@@ -38,4 +38,4 @@ class GraphMirror(KnowledgeHandler):
             named_graph = self.graph_parser.bundle_to_graph(bundle)
             self.log.info(f"Writing {bundle.rid} to graph")
             self.rdf_dataset.add_graph(named_graph)
-            self.rdf_dataset.serialize("dump.ttl")
+            # self.rdf_dataset.serialize("dump.ttl")

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 from logging import Logger
 from koi_net.components import Cache, Effector
 from rdflib import Graph, URIRef
@@ -6,7 +7,7 @@ from rid_lib import RID
 from rid_lib.ext import Bundle
 from rid_lib.types import KoiNetEdge, KoiNetNode
 
-from .rid_types import KoiNetContext
+from ..rid_types import KoiNetContext
 
 @dataclass
 class GraphParser:
@@ -17,6 +18,8 @@ class GraphParser:
     def retrieve_context(self, ctx_rid: KoiNetContext):
         ctx_bundle = self.effector.deref(ctx_rid)
         if ctx_bundle:
+            if "@context" in ctx_bundle.contents:
+                return ctx_bundle.contents["@context"]
             return ctx_bundle.contents
         else:
             self.log.warning("Failed to retrieve context")
@@ -80,14 +83,21 @@ class GraphParser:
         named_graph.parse(data=manifest_obj, format="json-ld")
         
         self.log.info("Processing contents")
+        
+        obj = bundle.contents.copy()
+        obj.setdefault("@id", str(bundle.rid))
+        obj.setdefault("@type", str(type(bundle.rid)))
+        
         contents_obj = self.preprocess_object(
-            obj=bundle.contents | {
-                "@id": str(bundle.rid),
-                "@type": str(type(bundle.rid))
-            },
-            default_context=context_lookup.get(type(bundle.rid))
+            obj, default_context=context_lookup.get(type(bundle.rid))
         )
+        
+        with open("preprocessed_contents.json", "w") as f:
+            json.dump(contents_obj, f, indent=2)
+        
         named_graph.parse(data=contents_obj, format="json-ld")
+        
+        named_graph.serialize("parsed_graph.ttl")
         
         self.log.info(f"Parsed {len(named_graph)} triples from {bundle.rid}:")
         for triple in named_graph:
