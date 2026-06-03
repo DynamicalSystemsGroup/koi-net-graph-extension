@@ -5,6 +5,7 @@ from koi_net.components.interfaces import DerefHandler
 
 from ..rid_types import KoiNetContext
 
+
 contexts = {
     KoiNetContext("manifest"): {
         "koi": "orn:koi-net.vocab:",

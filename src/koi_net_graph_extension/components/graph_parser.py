@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from logging import Logger
+
 from koi_net.components import Cache, Effector
 from rdflib import Graph, URIRef
 from rid_lib import RID
@@ -8,6 +9,7 @@ from rid_lib.ext import Bundle
 from rid_lib.types import KoiNetEdge, KoiNetNode
 
 from ..rid_types import KoiNetContext
+
 
 @dataclass
 class GraphParser:

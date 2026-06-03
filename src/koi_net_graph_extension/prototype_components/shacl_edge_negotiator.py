@@ -8,7 +8,7 @@ from koi_net.protocol import EdgeProfile, EdgeStatus, Event, KnowledgeObject, Ev
 from koi_net.components.interfaces import KnowledgeHandler, STOP_CHAIN, HandlerType
 from koi_net.components import NodeIdentity, KobjQueue, EventQueue, Cache
 
-from .components.graph_parser import GraphParser
+from ..components.graph_parser import GraphParser
 
 
 @dataclass

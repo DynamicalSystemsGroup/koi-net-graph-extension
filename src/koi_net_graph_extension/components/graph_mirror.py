@@ -8,6 +8,7 @@ from koi_net.protocol import EventType, KnowledgeObject
 
 from .graph_parser import GraphParser
 
+
 @dataclass
 class GraphMirror(KnowledgeHandler):
     log: Logger
@@ -28,8 +29,6 @@ class GraphMirror(KnowledgeHandler):
         elif kobj.normalized_event_type is EventType.FORGET:
             self.log.info(f"Deleting {kobj.rid} from graph")
             self.rdf_dataset.remove_graph(uri_ref)
-        
-        # self.rdf_dataset.serialize("dump.ttl")
             
     def start(self):
         for rid in self.cache.list_rids():
@@ -38,4 +37,3 @@ class GraphMirror(KnowledgeHandler):
             named_graph = self.graph_parser.bundle_to_graph(bundle)
             self.log.info(f"Writing {bundle.rid} to graph")
             self.rdf_dataset.add_graph(named_graph)
-            # self.rdf_dataset.serialize("dump.ttl")
