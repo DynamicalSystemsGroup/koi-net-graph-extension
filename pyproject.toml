@@ -1,12 +1,12 @@
 [project]
 name = "koi-net-graph-extension"
-version = "0.1.2"
+version = "0.1.3"
 description = "Mixin extension for KOI-net nodes adding RDF graph capabilities"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "koi-net>=2.1.0b1",
-    "rid-lib>=3.3.0b1",
+    "koi-net>=2.1.0",
+    "rid-lib>=3.3.0",
     "pyshacl>=0.31.0",
     "rdflib>=7.6.0",
 ]
