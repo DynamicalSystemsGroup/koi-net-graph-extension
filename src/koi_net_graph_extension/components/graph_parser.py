@@ -69,7 +69,6 @@ class GraphParser:
         return obj
         
     def bundle_to_graph(self, bundle: Bundle):
-        named_graph = Graph(identifier=URIRef(str(bundle.rid)))
 
         context_lookup = {
             KoiNetNode: KoiNetContext(KoiNetNode.namespace),
@@ -82,7 +81,6 @@ class GraphParser:
             obj=bundle.manifest.model_dump(mode="json", by_alias=True),
             default_context=KoiNetContext("manifest")
         )
-        named_graph.parse(data=manifest_obj, format="json-ld")
         
         self.log.info("Processing contents")
         
@@ -96,7 +94,14 @@ class GraphParser:
         
         with open("preprocessed_contents.json", "w") as f:
             json.dump(contents_obj, f, indent=2)
-        
+
+        # Use the container as the graph
+        # TODO: If type is container, use self
+        graph_identifier = contents_obj.get("has_container", str(bundle.rid))
+        named_graph = Graph(identifier=URIRef(graph_identifier))
+
+        named_graph.parse(data=manifest_obj, format="json-ld")
+
         named_graph.parse(data=contents_obj, format="json-ld")
         
         named_graph.serialize("parsed_graph.ttl")
